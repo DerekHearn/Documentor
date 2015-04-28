@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Data.SqlClient;
+using System.Data;
 
 namespace Documentor
 {
@@ -12,6 +14,39 @@ namespace Documentor
 
 		static void Main(string[] args)
 		{
+			var connectionString = "server=172.30.3.186;"
+			+ "database=MEETBALL_DITKA;"
+			+ "user id=mb_sql_svc_dev;"
+			+ "password=m33t8all!";
+
+			var tbl_sql = @"SELECT *
+					FROM  INFORMATION_SCHEMA.TABLES
+					WHERE TABLE_TYPE='BASE TABLE'";
+
+			var getTbl_sql = "SELECT * FROM ";
+
+			//var sqlc = new SqlConnection(connectionString);
+			var sql = "";
+			using (SqlConnection sqlc = new SqlConnection(connectionString))
+			{
+				var result = new Dictionary<string, int>();
+
+				//using (IDataReader rdr = GetReader())
+				//{
+				//	while (rdr.Read())
+				//	{
+				//		result[rdr[tableName + "Name"].ToString()] = (int)rdr[tableName + "ID"];
+				//	}
+				//}
+				//return result;
+
+				var cmd = new SqlCommand(tbl_sql, sqlc);
+				
+				sqlc.Open();
+				var err = cmd.ExecuteReader(CommandBehavior.Default);
+				Console.WriteLine(err);
+			}
+
 			if (args.Length > 0 && args[0].Contains("/h"))
 			{
 				Console.WriteLine("/service path to folder containing service files \n"
