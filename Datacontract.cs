@@ -10,45 +10,27 @@ namespace Documentor
 	class DataContract
 	{
 		private SortedSet<string> _files = new SortedSet<string>();
+		private Args _args;
+
+		public DataContract(Args clArgs)
+		{
+			this._args = clArgs;
+			setPaths(clArgs.dataContractFiles);
+		}
 
 		/// <summary>
 		/// file path or directory path
 		/// </summary>
-		/// <param name="path"></param>
-		public void setPath(string path)
+		/// <param name="paths"></param>
+		private void setPaths(string[] paths)
 		{
-			getFiles(path);
-		}
-
-		/// <summary>
-		/// get
-		/// </summary>
-		/// <param name="path"></param>
-		/// <returns></returns>
-		public string[] getFiles(string path)
-		{
-			var list = new List<string>();
-			var dirFiles = Directory.GetFiles(path, "*.cs");
-
-			foreach (string file in dirFiles)
+			foreach (string file in paths)
 			{
-				list.Add(file);
+				if (file.EndsWith(".cs"))
+					_files.Add(file);
+				else
+					Console.WriteLine(file + " is not a C# file. It has been rejected");
 			}
-
-			var ds = Directory.GetDirectories(path);
-			
-			foreach (string dir in ds)
-			{
-				var files = getFiles(dir);
-
-				foreach (string file in files)
-					list.Add(file);
-			}
-
-			foreach (string file in list)
-				_files.Add(file);
-
-			return list.ToArray();
 		}
 
 		public string[] toHTML()
@@ -66,7 +48,7 @@ namespace Documentor
 			return list.ToArray();
 		}
 
-		private Doc parse(string path)
+		private Doc parse(string file)
 		{
 			//find struct or class with the DataContract attr
 			//remove public and struct/class
@@ -75,7 +57,7 @@ namespace Documentor
 			var doc = new Doc();
 			try
 			{
-				using (var r = File.OpenText(path))
+				using (var r = File.OpenText(file))
 				{
 					XMLComment comm = null;
 					Contract cont = null;

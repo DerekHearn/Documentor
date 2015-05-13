@@ -1,121 +1,97 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Data.SqlClient;
-using System.Data;
 
 namespace Documentor
 {
 	class Program
 	{
-		static readonly string[] CMD_ARG_KEYS = { "/help", "/service", "/datacontract" };
+		static readonly string SERVICE_ARG_KEY = "/service";
+		static readonly string SERVICE_ARG_KEY_SHORT = "/s";
+		static readonly string DATACONTRACT_ARG_KEY = "/datacontract";
+		static readonly string DATACONTRACT_ARG_KEY_SHORT = "/d";
+		static readonly string WRITEPATH_ARG_KEY = "/writeto";
+		static readonly string WRITEPATH_ARG_KEY_SHORT = "/w";
+		static readonly string HELP_ARG_KEY = "/help";
+		static readonly string HELP_ARG_KEY_SHORT = "/h";
 
 		static void Main(string[] args)
 		{
-			var connectionString = "server=172.30.3.186;"
-			+ "database=MEETBALL_DITKA;"
-			+ "user id=mb_sql_svc_dev;"
-			+ "password=m33t8all!";
-
-			var tbl_sql = @"SELECT *
-					FROM  INFORMATION_SCHEMA.TABLES
-					WHERE TABLE_TYPE='BASE TABLE'";
-
-			var getTbl_sql = "SELECT * FROM ";
-
-			//var sqlc = new SqlConnection(connectionString);
-			var sql = "";
-			using (SqlConnection sqlc = new SqlConnection(connectionString))
-			{
-				var result = new Dictionary<string, int>();
-
-				//using (IDataReader rdr = GetReader())
-				//{
-				//	while (rdr.Read())
-				//	{
-				//		result[rdr[tableName + "Name"].ToString()] = (int)rdr[tableName + "ID"];
-				//	}
-				//}
-				//return result;
-
-				var cmd = new SqlCommand(tbl_sql, sqlc);
-				
-				sqlc.Open();
-				var err = cmd.ExecuteReader(CommandBehavior.Default);
-				Console.WriteLine(err);
-			}
-
-			if (args.Length > 0 && args[0].Contains("/h"))
+			var start = DateTime.UtcNow;
+			if (args.Length > 0 && 
+				(args[0].Equals(HELP_ARG_KEY, StringComparison.InvariantCultureIgnoreCase)) || 
+				 args[0].Equals(HELP_ARG_KEY_SHORT, StringComparison.InvariantCultureIgnoreCase))
 			{
 				Console.WriteLine("/service path to folder containing service files \n"
 					+ "/datacontract path to folder containing data contract files");
 				return;
 			}
 
-			Dictionary<string, string> clArgs = appStartup(args);
-
-			foreach (string key in clArgs.Keys)
-			{
-				Console.WriteLine(key + " " + clArgs[key]);
-			}
+			var clArgs = appStartup(args);
 
 			//"/p" path
-			if (clArgs.ContainsKey(CMD_ARG_KEYS[1]))
+			if (clArgs.serviceFiles.Length > 0)
 			{
-				var sc = new ServiceContract();
-
-				var path = clArgs[CMD_ARG_KEYS[1]];
-				sc.setPath(path);
+				var sc = new ServiceContract(clArgs);
 				var htmls = sc.toHTML();
-				var wp = path + "/AllServices.html";
+				var wp = clArgs.writePath + "/AllServices.html";
 				File.WriteAllLines(wp, htmls);
 			}
 
 
-			if (clArgs.ContainsKey(CMD_ARG_KEYS[2]))
+			if (clArgs.dataContractFiles.Length > 0)
 			{
-				string dcp = clArgs[CMD_ARG_KEYS[2]];
-
-				var dc = new DataContract();
-				dc.setPath(dcp);
+				var dc = new DataContract(clArgs);
 				var htmls = dc.toHTML();
-				var wp = dcp + "/ContractDocument.html";
+				var wp = clArgs.writePath + "/ContractDocument.html";
 
 				File.WriteAllLines(wp, htmls);
 			}
 
-			Console.WriteLine("Finished");
+			
+			var end = DateTime.UtcNow;
+
+			Console.WriteLine("Finished: " + (end - start).Milliseconds + "ms");
 		}
 
-		static Dictionary<string, string> appStartup(string[] args)
+		static Args appStartup(string[] args)
 		{
-			var clArgs = new Dictionary<string, string>();
 			// Don't bother if no command line args were passed
 			// NOTE: e.Args is never null - if no command line args were passed, 
 			//       the length of e.Args is .0
-			if (args.Length == 0) 
-				return clArgs;
+			var length = args.Length;
+			if(length == 0)
+				throw new ArgumentException("arguments required in order to function");
+			var serviceFiles = new List<string>();
+			var dataContractFiles = new List<string>();
+			string writePath = null;
 
-			var flag = false;
-			var key = "";
-			for (int i = 0; i < args.Length; i++)
+			var ignoreCase = StringComparison.InvariantCultureIgnoreCase;
+
+			for(int i = 0; i+1 < length; i+=2)
 			{
-				if (flag)
+				if(args[i].Equals(SERVICE_ARG_KEY_SHORT, ignoreCase) ||
+					args[i].Equals(SERVICE_ARG_KEY, ignoreCase))
+					serviceFiles.Add(args[i+1]);
+				else if(args[i].Equals(DATACONTRACT_ARG_KEY_SHORT, ignoreCase) ||
+					args[i].Equals(DATACONTRACT_ARG_KEY, ignoreCase))
+					dataContractFiles.Add(args[i+1]);
+				else if ((args[i].Equals(WRITEPATH_ARG_KEY_SHORT, ignoreCase) ||
+					args[i].Equals(WRITEPATH_ARG_KEY, ignoreCase)))
 				{
-					clArgs.Add(key, args[i]);
-					flag = !flag;
-				}
-				else
-				{
-					key = args[i];
-					flag = !flag;
+					if (writePath != null)
+						throw new ArgumentException("Multiple writepaths found. Only one allowed");
+					writePath = args[i + 1];
 				}
 			}
 
-			return clArgs;
+			if(writePath == null)
+				throw new ArgumentException("No write path found");
+
+			return new Args(serviceFiles.ToArray(), dataContractFiles.ToArray(), writePath);
 		}
+
+		
 
 	}
 }

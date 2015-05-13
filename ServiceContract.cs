@@ -17,47 +17,29 @@ namespace Documentor
 			service,
 		}
 
+		private Args _args;
+
+		public ServiceContract(Args clArgs)
+		{
+			_args = clArgs;
+			setPaths(clArgs.serviceFiles);
+		}
+
 		private SortedSet<string> _files = new SortedSet<string>();
 
 		/// <summary>
 		/// file path or directory path
 		/// </summary>
 		/// <param name="path"></param>
-		public void setPath(string path)
+		private void setPaths(string[] paths)
 		{
-			getFiles(path);
-		}
-
-		/// <summary>
-		/// get
-		/// </summary>
-		/// <param name="path"></param>
-		/// <returns></returns>
-		public string[] getFiles(string path)
-		{
-			var list = new List<string>();
-			var dirFiles = Directory.GetFiles(path, "*.cs");
-
-			foreach (string file in dirFiles)
+			foreach (string file in paths)
 			{
-				if (!file.Contains("Xml"))
-					list.Add(file);
+				if (file.EndsWith(".cs"))
+					_files.Add(file);
+				else
+					Console.WriteLine(file + " is not a C# file. It has been rejected");
 			}
-
-			var ds = Directory.GetDirectories(path);
-
-			foreach (string dir in ds)
-			{
-				var files = getFiles(dir);
-
-				foreach (string file in files)
-					list.Add(file);
-			}
-
-			foreach (string file in list)
-				_files.Add(file);
-
-			return list.ToArray();
 		}
 
 		public string[] toHTML()
@@ -82,25 +64,13 @@ namespace Documentor
 			return list.ToArray();
 		}
 
-		private static void writeHTML(string path, Doc doc)
-		{
-			try
-			{
-				File.WriteAllText(path, doc.toHTML());
-			}
-			catch (Exception e)
-			{
-				Console.WriteLine(e);
-			}
-		}
-
-		private static Doc parse(string path)
+		private Doc parse(string file)
 		{
 			var doc = new Doc();
 
 			try
 			{
-				using (var r = File.OpenText(path))
+				using (var r = File.OpenText(file))
 				{
 					IDocPart part = new Service();
 					var state = State.search;
