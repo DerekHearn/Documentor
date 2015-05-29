@@ -160,6 +160,7 @@ namespace Documentor
 				{
 					if (dp is XMLComment)
 					{
+						sb.Append(dp.toHTML());
 						continue;
 					}
 					sb.Append(dp.toHTML());
@@ -197,7 +198,9 @@ namespace Documentor
 				var sb = new StringBuilder();
 				foreach (string s in _items)
 				{
-					sb.Append(s);
+					var ts = s;
+					ts = ts.Replace("<", "&lt;").Replace(">", "&gt;");
+					sb.Append(ts);
 					sb.Append("<br>");
 				}
 				return sb.ToString();
