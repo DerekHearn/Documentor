@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 
 namespace Documentor
@@ -17,7 +18,7 @@ namespace Documentor
 
 		static void Main(string[] args)
 		{
-			var start = DateTime.UtcNow;
+			var sw = Stopwatch.StartNew();
 			if (args.Length > 0 && 
 				(args[0].Equals(HELP_ARG_KEY, StringComparison.InvariantCultureIgnoreCase)) || 
 				 args[0].Equals(HELP_ARG_KEY_SHORT, StringComparison.InvariantCultureIgnoreCase))
@@ -50,8 +51,8 @@ namespace Documentor
 
 			
 			var end = DateTime.UtcNow;
-
-			Console.WriteLine("Finished: " + (end - start).Milliseconds + "ms");
+			sw.Stop();
+			Console.WriteLine("Finished: " + sw.ElapsedMilliseconds + "ms");
 		}
 
 		static Args appStartup(string[] args)
