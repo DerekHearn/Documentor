@@ -196,6 +196,7 @@ namespace Documentor
 			public string toHTML()
 			{
 				var sb = new StringBuilder();
+
 				foreach (IDocPart dp in _items)
 				{
 					if (dp is XMLComment)

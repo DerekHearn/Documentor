@@ -92,7 +92,5 @@ namespace Documentor
 			return new Args(serviceFiles.ToArray(), dataContractFiles.ToArray(), writePath);
 		}
 
-		
-
 	}
 }
