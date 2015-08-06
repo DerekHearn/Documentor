@@ -148,6 +148,10 @@ namespace Documentor
 		{
 			private readonly string lineHeight = "125%";
 			private readonly string fontFace = "courier";
+			private readonly string style = "<style>font.big {125%;}.comment{color:#608B4E;}.title{color:#92CAF4;}.params{color:#FFFFFF;}.item{color:#C28566;}.getpost{color:#D85050;}.services{margin: 5% 0% 5% 5%;}.header{color:white; text-align: center;border-style: solid; border-bottom-color: #FFFFFF;  border-bottom-width: 1px;border-left-style: none; border-right-style: none; border-top-style: none;}.header-container{width:100%; position:fixed; top:0px;background-color: #050A00}.footer{color:white; text-align: center;}.footer-container{border-style: solid; border-top-color: #FFFFFF;  border-top-width: 1px;border-left-style: none; border-right-style: none; border-bottom-style: none;width:100%; bottom: 0px; position:fixed;background-color: #050A00;}.footer-joke{color:white; font-style: normal;}.mbimg{width:64px;height:64px;}body { background-color: #050A00; margin: 0 0 0 0;}</style>";
+			private readonly string header = "<div class=header-container><div class = \"header\"><span>MeetBall App</span><img class = \"mbimg\" src=\"BMB.png\" align=\"middle\"><span>Web-Services</span></div></div>";
+			private readonly string footer = "<div class=\"footer-container\"><div class = \"footer\"><a href=\"https://youtu.be/m9We2XsVZfc?t=11\" class =\"footer-joke\">Who ya gonna call?</a></div></div>";
+
 
 			List<IDocPart> _items = new List<IDocPart>();
 
@@ -160,20 +164,17 @@ namespace Documentor
 			{
 				var sb = new StringBuilder();
 
-				//general text formating
-				sb.Append("<style>font.big {line-height:");
-				sb.Append(lineHeight);
-				sb.Append(";}</style>");
+				sb.Append(style);
+				
+				sb.Append(header);
+				
 				sb.Append("<FONT FACE=\"");
 				sb.Append(fontFace);
 				sb.Append("\" color=\"white\" class=\"big\">");
-				sb.Append("<style> body { background-color: #050A00; margin: 0 5% 0 5%;</style>");
-
-				//header
-				sb.Append("<center><hr><h2 style=\"color:white\"><span style=\"align:left;\">MeetBall App");
-				sb.Append("</span><img src=\"BMB.png\" style=\"width:128px;height:128px;\" align=\"middle\">");
-				sb.Append("<span style=\"align:left\">Web-Services</span></h2><hr></center><br>");
-
+				sb.Append("<style> body { background-color: #050A00;</style>");
+				sb.Append("<br><br><br>");
+				
+				sb.Append("<div class=\"services\">");
 				foreach (IDocPart dp in _items)
 				{
 					if (dp is XMLComment)
@@ -189,15 +190,16 @@ namespace Documentor
 					}
 				}
 
-				sb.Append("</FONT>");
+				sb.Append("</div></FONT>");
+
+				//footer
+				sb.Append(footer);
 				return sb.ToString();
 			}
 		}
 
 		class XMLComment : IDocPart
 		{
-			private readonly string color = "#608B4E";//"#336600";
-
 			List<string> _items = new List<string>();
 
 			public void add(string s)
@@ -218,27 +220,27 @@ namespace Documentor
 			public string toHTML()
 			{
 				var sb = new StringBuilder();
+				sb.Append("<span class=\"comment\">");
 				foreach (string s in _items)
 				{
 					var ts = s;
 					ts = ts.Replace("<", "&lt;").Replace(">", "&gt;");
-					sb.Append(String.Format("<span style=\"color:{0};\">", color));
 					sb.Append(ts);
-					sb.Append("</span>");
 					sb.Append("<br>");
 				}
+				sb.Append("</span>");
 				return sb.ToString();
 			}
 		}
 
 		class EndPoint : IDocPart
 		{
-			private readonly string span = "<span style=\"color:{0};\">";
+			private readonly string span = "<span class=\"{0}\">";
 			private readonly string spanEnd = "</span>";
 
-			private readonly string defaultColor = "#92CAF4";
-			private readonly string GETPOSTColor = "#D85050";
-			private readonly string endpointColor = "#C28566";
+			private readonly string defaultClass = "title";
+			private readonly string GETPOSTClass = "getpost";
+			private readonly string itemClass = "item";
 
 			List<string> _items = new List<string>();
 
@@ -263,23 +265,23 @@ namespace Documentor
 				var ts = this.toString();
 				if (ts.Contains("WebMessageFormat.Json"))
 				{
-					sb.Append(String.Format(span, defaultColor));
+					sb.Append(String.Format(span, defaultClass));
 					sb.Append("Content-Type: ");
 					sb.Append(spanEnd);
-					sb.Append(String.Format(span, endpointColor));
+					sb.Append(String.Format(span, itemClass));
 					sb.Append("application/json<br>");
 					sb.Append(spanEnd);
 				}
 
 				if (ts.Contains("WebInvoke"))
 				{
-					sb.Append(String.Format(span, GETPOSTColor));
+					sb.Append(String.Format(span, GETPOSTClass));
 					sb.Append("POST<br>");
 					sb.Append(spanEnd);
 				}
 				else if (ts.Contains("WebGet"))
 				{
-					sb.Append(String.Format(span, GETPOSTColor));
+					sb.Append(String.Format(span, GETPOSTClass));
 					sb.Append("GET<br>");
 					sb.Append(spanEnd);
 				}
@@ -289,10 +291,10 @@ namespace Documentor
 				var pss = ps.Split('\"');
 				if (pss.Length > 0)
 				{
-					sb.Append(String.Format(span, defaultColor));
+					sb.Append(String.Format(span, defaultClass));
 					sb.Append("Endpoint: ");
 					sb.Append(spanEnd);
-					sb.Append(String.Format(span, endpointColor));
+					sb.Append(String.Format(span, itemClass));
 					sb.Append(".../");
 					sb.Append(pss[1]);
 					sb.Append(spanEnd);
@@ -305,12 +307,12 @@ namespace Documentor
 
 		class Service : IDocPart
 		{
-			private readonly string span = "<span style=\"color:{0};\">";
+			private readonly string span = "<span class=\"{0}\">";
 			private readonly string spanEnd = "</span>";
 
-			private readonly string defaultColor = "white";
-			private readonly string lookHere = "#92CAF4";
-			private readonly string retColor = "#C28566";
+			private readonly string paramClass = "params";
+			private readonly string defaultClass = "title";
+			private readonly string itemClass = "item";
 
 			List<string> _items = new List<string>();
 
@@ -343,7 +345,7 @@ namespace Documentor
 				var tempSplit = temp.Split(' ');
 				
 				//return value
-				sb3.Append(String.Format(span, lookHere));
+				sb3.Append(String.Format(span, defaultClass));
 				sb3.Append("Return Value: ");
 				sb3.Append(spanEnd);
 
@@ -352,11 +354,11 @@ namespace Documentor
 					var otherSplit = tempSplit[0].Replace("&lt;", "<")
 						.Replace("&gt;", "<")
 						.Split('<');
-					sb3.Append(String.Format(span, retColor));
+					sb3.Append(String.Format(span, itemClass));
 					sb3.Append(otherSplit[0]);
 					sb3.Append(spanEnd);
 					sb3.Append("&lt;");
-					sb3.Append(String.Format(span, retColor));
+					sb3.Append(String.Format(span, itemClass));
 					sb3.Append(otherSplit[1]);
 					sb3.Append(spanEnd);
 					sb3.Append("&gt;");
@@ -364,7 +366,7 @@ namespace Documentor
 				}
 				else
 				{
-					sb3.Append(String.Format(span, retColor));
+					sb3.Append(String.Format(span, itemClass));
 					sb3.Append(tempSplit[0]);
 					sb3.Append(spanEnd);
 				}
@@ -388,10 +390,10 @@ namespace Documentor
 				tempSplit = temp.Split(new char[]{'(', ')'});
 				
 				//service name
-				sb3.Append(String.Format(span, lookHere));
+				sb3.Append(String.Format(span, defaultClass));
 				sb3.Append("Service Name: ");
 				sb3.Append(spanEnd);
-				sb3.Append(String.Format(span, retColor));
+				sb3.Append(String.Format(span, itemClass));
 				sb3.Append(tempSplit[0]);
 				sb3.Append(spanEnd);
 				sb3.Append("<br>");
@@ -399,11 +401,11 @@ namespace Documentor
 				sb3.Clear();
 
 				//params
-				sb3.Append(String.Format(span, lookHere));
+				sb3.Append(String.Format(span, defaultClass));
 				sb3.Append("Params: ");
 				sb3.Append(spanEnd);
 
-				sb3.Append(String.Format(span, defaultColor));
+				sb3.Append(String.Format(span, paramClass));
 				for (int i = 1; i < tempSplit.Length; i++)
 				{
 					sb3.Append(tempSplit[i]);
